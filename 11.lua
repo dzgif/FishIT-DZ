@@ -349,9 +349,9 @@ local function buildWindow()
     })
 
     Window:EditOpenButton({ Title = "DZ v1", Icon = "circle-check", CornerRadius = UDim.new(0,16), StrokeThickness = 2, Color = ColorSequence.new(Color3.fromHex("9600FF"), Color3.fromHex("AEBAF8")), Draggable = true })
-    Window:Tag({ Title = "V1 - STABLE", Color = Color3.fromHex("#ffcc00") })
+    Window:Tag({ Title = "V1 STABLE", Color = Color3.fromHex("#ffcc00") })
     UI:SetNotificationLower(true)
-    pcall(function() UI:Notify({ Title = "DZZ - Fish It v1", Content = "Script loaded successfully", Duration = 4, Icon = "circle-check" }) end)
+    pcall(function() UI:Notify({ Title = "DZ v1", Content = "Script loaded successfully", Duration = 4, Icon = "circle-check" }) end)
 
 
     -------------------------------------------
@@ -371,8 +371,9 @@ local function buildWindow()
     local SettingsMisc = Window:Tab({ Title = "Settings & Misc", Icon = "settings" })
     local Webhooksettings = Window:Tab({ Title = "Webhook", Icon = "webhook" })
 
-    -- Set default tab to Developer Info on open
+    -- Set default tab to Developer Info on load
     pcall(function() Window:SetTab("Developer Info") end)
+
 
     -------------------------------------------
     ----- =======[ DEVELOPER / DISCORD INFO ]
@@ -905,7 +906,6 @@ local function buildWindow()
     local ISLAND_LIST = {
         ["Esoteric Depths"] = { CFrame.new(3298.009766, -1302.854858, 1371.003906, -0.338608444, 0.000000057, 0.940927386, 0.000000004, 1.000000000, -0.000000059, -0.940927386, -0.000000016, -0.338608444) },
         ["Tropical Grove"] = { CFrame.new(-2129.893799, 53.487057, 3637.102783, -0.845159769, 0.000000045, 0.534513772, 0.000000074, 1.000000000, 0.000000033, -0.534513772, 0.000000067, -0.845159769) },
-        ["Weather Machine"] = { CFrame.new(-1572.540161, 13.189098, 1922.284668, -0.734644592, 0.000000019, -0.678452134, -0.000000026, 1.000000000, 0.000000056, 0.678452134, 0.000000058, -0.734644592) },
         ["Tropical Grove [Ares Rod]"] = { CFrame.new(-2191.75, 3.37, 3703.33) },
         ["Fisherman Island"] = { CFrame.new(-127.06, 40.75, 2774.84) },
         ["Kohana Volcano"] = { CFrame.new(-648.43, 66.00, 213.34) },
@@ -933,7 +933,6 @@ local function buildWindow()
             end
         end
     end)
-
     Teleport:Paragraph({
         Title = "🎣 Teleport Information",
         Desc = "Jika ingin memakai auto farm aktifkan ketika sudah memilih pulau/island.\nUntuk teleport biasa silahkan tekan button teleport saja tanpa auto farm.",
@@ -953,7 +952,22 @@ local function buildWindow()
         end
     end })
 
-
+    -- Copy current CFrame (position + rotation) helper
+    Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
+        if not hrp then
+            pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
+            return
+        end
+        local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
+        local cfString = string.format(
+            "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
+            a,b,c,d,e,f,g,h,i,j,k,l
+        )
+        if setclipboard then pcall(setclipboard, cfString) end
+        pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
+    end })
     local autoFarmLoop
     Teleport:Toggle({ Title = "Enable Auto Farm (uses selected island)", Callback = function(v)
         if v then
@@ -1451,10 +1465,10 @@ local function buildWindow()
             ["description"] = string.format("Player **%s** caught a **%s** (%s)!", username, fishName, rarityText),
             ["color"] = tonumber("0x00bfff"),
             ["image"] = { ["url"] = imageUrl },
-            ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook | " .. os.date("%H:%M:%S") }
+            ["footer"] = { ["text"] = "DZv1 Webhook | " .. os.date("%H:%M:%S") }
         }
         if fields then embed["fields"] = fields end
-        local data = { ["username"] = "DZ Fisher v1 - Notification System", ["embeds"] = { embed } }
+        local data = { ["username"] = "DZv1 Fisher - Notification System", ["embeds"] = { embed } }
         
         local requestFunc = syn and syn.request or http and http.request or http_request or request or fluxus and fluxus.request
         if requestFunc then
@@ -1545,12 +1559,12 @@ local function buildWindow()
             -- Send test webhook
             local WebhookURL = "https://discord.com/api/webhooks/" .. webhookState.webhookPath
             local data = {
-                ["username"] = "DZ Fisher v1 - Notification System",
+                ["username"] = "DZv1 Fisher - Notification System",
                 ["embeds"] = {{
                     ["title"] = "🧪 Test Webhook",
-                    ["description"] = "This is a test message from DZ Fisher v1 -  script!",
+                    ["description"] = "This is a test message from DZv1 script!",
                     ["color"] = tonumber("0x00ff00"),
-                    ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook Test | " .. os.date("%H:%M:%S") }
+                    ["footer"] = { ["text"] = "DZv1 Webhook Test | " .. os.date("%H:%M:%S") }
                 }}
             }
             
@@ -1660,22 +1674,4 @@ end
     --     local s = tostring(cf)
     --     if setclipboard then setclipboard(s) end
     --     pcall(function() UI:Notify({ Title = "Coord", Content = "Copied CFrame to clipboard", Duration = 2, Icon = "clipboard" }) end)
-    -- end })
-
-
-    -- Copy current CFrame (position + rotation) helper
-    -- Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
-    --     local char = player.Character or player.CharacterAdded:Wait()
-    --     local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
-    --     if not hrp then
-    --         pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
-    --         return
-    --     end
-    --     local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
-    --     local cfString = string.format(
-    --         "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
-    --         a,b,c,d,e,f,g,h,i,j,k,l
-    --     )
-    --     if setclipboard then pcall(setclipboard, cfString) end
-    --     pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
     -- end })
