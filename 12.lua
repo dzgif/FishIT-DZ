@@ -145,45 +145,31 @@ end
 
 local function startAutoSell()
     task.spawn(function()
-        local lastSell = 0
-        local minSellInterval = 8 -- seconds
         while state.AutoSell do
             pcall(function()
                 if not Replion then return end
                 local DataReplion = Replion.Client:WaitReplion("Data")
-                if not DataReplion then return end
-                local items = DataReplion:Get({"Inventory","Items"})
+                local items = DataReplion and DataReplion:Get({"Inventory","Items"})
                 if type(items) ~= "table" then return end
 
-                -- Count inventory load
-                local totalCount, unfavoritedCount = 0, 0
+                local unfavoritedCount = 0
                 for _, item in ipairs(items) do
-                    local n = item.Count or 1
-                    totalCount = totalCount + n
-                    if not item.Favorited then unfavoritedCount = unfavoritedCount + n end
+                    if not item.Favorited then
+                        unfavoritedCount = unfavoritedCount + (item.Count or 1)
+                    end
                 end
 
-                -- Optional capacity lookup (best-effort)
-                local capacity = DataReplion:Get({"Inventory","Capacity"}) or DataReplion:Get({"Inventory","MaxItems"})
-
-                -- Trigger sell when ANY of these conditions met:
-                -- 1) Unfavorited items reach threshold
-                -- 2) Total items reach threshold (user meant bag fill)
-                -- 3) Capacity exists and total items >= capacity (bag full)
-                local shouldSell = (unfavoritedCount >= state.SellThreshold) or (totalCount >= state.SellThreshold) or (capacity and totalCount >= capacity)
-
-                local now = os.clock()
-                if shouldSell and (now - lastSell) >= minSellInterval then
+                if unfavoritedCount >= state.SellThreshold then
                     local netFolder = getNetFolder()
-                    local sellFunc = netFolder and netFolder:FindFirstChild("RF/SellAllItems")
-                    if sellFunc then
-                        lastSell = now
-                        local ok = pcall(function() sellFunc:InvokeServer() end)
-                        if ok then pcall(function() UI:Notify({ Title = "Auto Sell", Content = "Sold items ("..tostring(unfavoritedCount).." unfav / "..tostring(totalCount).." total)", Duration = 2, Icon = "check-circle" }) end) end
+                    if netFolder then
+                        local sellFunc = netFolder:FindFirstChild("RF/SellAllItems")
+                        if sellFunc then
+                            task.spawn(sellFunc.InvokeServer, sellFunc)
+                        end
                     end
                 end
             end)
-            task.wait(2)
+            task.wait(10)
         end
     end)
 end
@@ -1465,10 +1451,10 @@ local function buildWindow()
             ["description"] = string.format("Player **%s** caught a **%s** (%s)!", username, fishName, rarityText),
             ["color"] = tonumber("0x00bfff"),
             ["image"] = { ["url"] = imageUrl },
-            ["footer"] = { ["text"] = "DZv1 Webhook | " .. os.date("%H:%M:%S") }
+            ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook | " .. os.date("%H:%M:%S") }
         }
         if fields then embed["fields"] = fields end
-        local data = { ["username"] = "DZv1 Fisher - Notification System", ["embeds"] = { embed } }
+        local data = { ["username"] = "DZ Fisher v1 - Notification System", ["embeds"] = { embed } }
         
         local requestFunc = syn and syn.request or http and http.request or http_request or request or fluxus and fluxus.request
         if requestFunc then
@@ -1559,12 +1545,12 @@ local function buildWindow()
             -- Send test webhook
             local WebhookURL = "https://discord.com/api/webhooks/" .. webhookState.webhookPath
             local data = {
-                ["username"] = "DZv1 Fisher - Notification System",
+                ["username"] = "DZ Fisher v1 - Notification System",
                 ["embeds"] = {{
                     ["title"] = "🧪 Test Webhook",
-                    ["description"] = "This is a test message from DZv1 script!",
+                    ["description"] = "This is a test message from DZ Fisher v1 -  script!",
                     ["color"] = tonumber("0x00ff00"),
-                    ["footer"] = { ["text"] = "DZv1 Webhook Test | " .. os.date("%H:%M:%S") }
+                    ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook Test | " .. os.date("%H:%M:%S") }
                 }}
             }
             
