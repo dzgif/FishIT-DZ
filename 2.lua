@@ -372,7 +372,7 @@ local function buildWindow()
     local Webhooksettings = Window:Tab({ Title = "Webhook", Icon = "webhook" })
 
     -- Set default tab to Developer Info on load
-    pcall(function() Window:SetTab("Dev") end)
+    pcall(function() Window:SetTab("Developer Info") end)
 
 
     -------------------------------------------
@@ -418,6 +418,26 @@ local function buildWindow()
         Title = "🌦️ Auto Buy Weather Events",
         Desc = "Automatically purchase weather events to enhance your fishing experience.",
         Locked = true
+    })
+
+    -- Auto buy weather toggle
+    Weathershop:Toggle({ 
+        Title = "Enable Auto Buy Weather", 
+        Desc = "Automatically purchase selected weather events",
+        Callback = function(value)
+            state.AutoBuyWeather = value
+            if value then
+                -- Check if any weather is selected
+                if #weatherState.selectedList == 0 then
+                    pcall(function() UI:Notify({ Title = "No Selection", Content = "Please select at least one weather event first", Duration = 3, Icon = "alert-triangle" }) end)
+                    state.AutoBuyWeather = false
+                    return
+                end
+                pcall(function() UI:Notify({ Title = "Auto Weather", Content = "Started monitoring " .. #weatherState.selectedList .. " selected weather events", Duration = 3, Icon = "cloud" }) end)
+            else
+                pcall(function() UI:Notify({ Title = "Auto Weather", Content = "Stopped auto buying weather events", Duration = 3, Icon = "cloud" }) end)
+            end
+        end
     })
     
     -- Weather events list (UI names)
@@ -532,26 +552,6 @@ local function buildWindow()
         end 
     })
     
-    -- Auto buy weather toggle
-    Weathershop:Toggle({ 
-        Title = "Enable Auto Buy Weather", 
-        Desc = "Automatically purchase selected weather events",
-        Callback = function(value)
-            state.AutoBuyWeather = value
-            if value then
-                -- Check if any weather is selected
-                if #weatherState.selectedList == 0 then
-                    pcall(function() UI:Notify({ Title = "No Selection", Content = "Please select at least one weather event first", Duration = 3, Icon = "alert-triangle" }) end)
-                    state.AutoBuyWeather = false
-                    return
-                end
-                pcall(function() UI:Notify({ Title = "Auto Weather", Content = "Started monitoring " .. #weatherState.selectedList .. " selected weather events", Duration = 3, Icon = "cloud" }) end)
-            else
-                pcall(function() UI:Notify({ Title = "Auto Weather", Content = "Stopped auto buying weather events", Duration = 3, Icon = "cloud" }) end)
-            end
-        end
-    })
-    
     -- Weather monitoring loop
     task.spawn(function()
         while task.wait(config.weather.pollIntervalSeconds) do
@@ -634,23 +634,23 @@ local function buildWindow()
     end)
     
     -- Teleport to Weather Machine button
-    Weathershop:Button({
-        Title = "📍 Teleport to Weather Machine",
-        Callback = function()
-            local weatherMachine = workspace:FindFirstChild("!!!! ISLAND LOCATIONS !!!!")
-            if weatherMachine then
-                weatherMachine = weatherMachine:FindFirstChild("Weather Machine")
-            end
-            
-            local char = player.Character
-            if weatherMachine and char and char:FindFirstChild("HumanoidRootPart") then
-                char:PivotTo(CFrame.new(weatherMachine.Position + Vector3.new(0, 5, 0)))
-                pcall(function() UI:Notify({ Title = "Teleported", Content = "To Weather Machine", Duration = 3, Icon = "map-pin" }) end)
-            else
-                pcall(function() UI:Notify({ Title = "Error", Content = "Weather Machine or Character not found", Duration = 3, Icon = "alert-triangle" }) end)
-            end
-        end
-    })
+    -- Weathershop:Button({
+    --     Title = "📍 Teleport to Weather Machine",
+    --     Callback = function()
+    --         local weatherMachine = workspace:FindFirstChild("!!!! ISLAND LOCATIONS !!!!")
+    --         if weatherMachine then
+    --             weatherMachine = weatherMachine:FindFirstChild("Weather Machine")
+    --         end
+    --         
+    --         local char = player.Character
+    --         if weatherMachine and char and char:FindFirstChild("HumanoidRootPart") then
+    --             char:PivotTo(CFrame.new(weatherMachine.Position + Vector3.new(0, 5, 0)))
+    --             pcall(function() UI:Notify({ Title = "Teleported", Content = "To Weather Machine", Duration = 3, Icon = "map-pin" }) end)
+    --         else
+    --             pcall(function() UI:Notify({ Title = "Error", Content = "Weather Machine or Character not found", Duration = 3, Icon = "alert-triangle" }) end)
+    --         end
+    --     end
+    -- })
     
     -------------------------------------------
     ----- =======[ SHOP TAB ]
@@ -904,18 +904,19 @@ local function buildWindow()
     -------------------------------------------
     -- Island list diambil dari main.lua (posisi Vector3 dikonversi ke CFrame)
     local ISLAND_LIST = {
-        ["Esoteric Depths"] = { CFrame.new(3295.51, -1302.85, 1371.23) },
-        ["Tropical Grove"] = { CFrame.new(-2129.74, 53.49, 3635.48) },
+        ["Esoteric Depths"] = { CFrame.new(3298.009766, -1302.854858, 1371.003906, -0.338608444, 0.000000057, 0.940927386, 0.000000004, 1.000000000, -0.000000059, -0.940927386, -0.000000016, -0.338608444) },
+        ["Tropical Grove"] = { CFrame.new(-2129.893799, 53.487057, 3637.102783, -0.845159769, 0.000000045, 0.534513772, 0.000000074, 1.000000000, 0.000000033, -0.534513772, 0.000000067, -0.845159769) },
+        ["Weather Machine"] = { CFrame.new(-1572.540161, 13.189098, 1922.284668, -0.734644592, 0.000000019, -0.678452134, -0.000000026, 1.000000000, 0.000000056, 0.678452134, 0.000000058, -0.734644592) },
         ["Tropical Grove [Ares Rod]"] = { CFrame.new(-2191.75, 3.37, 3703.33) },
         ["Fisherman Island"] = { CFrame.new(-127.06, 40.75, 2774.84) },
         ["Kohana Volcano"] = { CFrame.new(-648.43, 66.00, 213.34) },
         ["Coral Reefs"] = { CFrame.new(-3023.17, 2.52, 2257.24) },
-        ["Crater Island"] = { CFrame.new(1039.25, 55.29, 5130.74) },
-        ["Kohana"] = { CFrame.new(-673.91, 5.75, 705.09) },
-        ["Winter Fest"] = { CFrame.new(1821.90, 5.79, 3307.58) },
-        ["Isoteric Island"] = { CFrame.new(2082.14, 283.98, 1157.43) },
+        ["Crater Island"] = { CFrame.new(1040.245483, 55.546593, 5130.437012, 0.545946598, -0.000000054, 0.837819993, 0.000000051, 1.000000000, 0.000000032, -0.837819993, 0.000000025, 0.545946598) },
+        ["Kohana"] = { CFrame.new(-673.715088, 5.750061, 702.517517, -0.098589085, -0.000000048, -0.995128214, -0.000000048, 1.000000000, -0.000000044, 0.995128214, 0.000000043, -0.098589085) },
+        ["Winter Fest"] = { CFrame.new(1822.619629, 5.788595, 3305.499756, -0.246590868, 0.000000004, -0.969119668, 0.000000006, 1.000000000, 0.000000003, 0.969119668, -0.000000006, -0.246590868) },
+        ["Isoteric Island"] = { CFrame.new(2081.354004, 283.900482, 1157.097534, -0.136091888, 0.000000088, 0.990696192, 0.000000086, 1.000000000, -0.000000077, -0.990696192, 0.000000075, -0.136091888) },
         ["Lost Isle [Angler Rod Place]"] = { CFrame.new(-3791.82, -147.91, -1349.01) },
-        ["Lost Isle [Sisyphus]"] = { CFrame.new(-3763.11, -135.07, -998.47) },
+        ["Lost Isle [Sisyphus]"] = { CFrame.new(-3740.087646, -135.074417, -1008.828186, -0.978001833, 0.000000010, -0.208596319, -0.000000002, 1.000000000, 0.000000060, 0.208596319, 0.000000059, -0.978001833) },
         ["Lost Isle [Treasure Hall]"] = { CFrame.new(-3600.76, -316.57, -1409.19) },
         ["Lost Isle [Treasure Room]"] = { CFrame.new(-3598.11, -275.95, -1639.98) },
     }
@@ -952,22 +953,7 @@ local function buildWindow()
         end
     end })
 
-    -- Copy current CFrame (position + rotation) helper
-    Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
-        if not hrp then
-            pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
-            return
-        end
-        local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
-        local cfString = string.format(
-            "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
-            a,b,c,d,e,f,g,h,i,j,k,l
-        )
-        if setclipboard then pcall(setclipboard, cfString) end
-        pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
-    end })
+
     local autoFarmLoop
     Teleport:Toggle({ Title = "Enable Auto Farm (uses selected island)", Callback = function(v)
         if v then
@@ -1624,3 +1610,72 @@ if not ok then
         }) 
     end)
 end
+
+
+-- Debug / Developing Code 
+-- Coordinate Tools (disabled per request)
+    -- SettingsMisc:Paragraph({ Title = "Coordinates", Desc = "Tools to view/copy your current position.", Locked = true })
+    -- local coordHud = { gui = nil, conn = nil, visible = false }
+    -- local function destroyCoordHud()
+    --     if coordHud.conn then coordHud.conn:Disconnect(); coordHud.conn = nil end
+    --     if coordHud.gui then coordHud.gui:Destroy(); coordHud.gui = nil end
+    --     coordHud.visible = false
+    -- end
+    -- local function createCoordHud()
+    --     destroyCoordHud()
+    --     local pg = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui")
+    --     local gui = Instance.new("ScreenGui")
+    --     gui.Name = "DZv1_CoordHUD"; gui.ResetOnSpawn = false; gui.Parent = pg
+    --     local lb = Instance.new("TextLabel")
+    --     lb.Size = UDim2.fromOffset(320, 24); lb.Position = UDim2.fromOffset(10, 10)
+    --     lb.BackgroundTransparency = 0.3; lb.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    --     lb.TextSize = 14; lb.Font = Enum.Font.SourceSans; lb.TextColor3 = Color3.new(1,1,1)
+    --     lb.Text = "Pos: -"
+    --     lb.Parent = gui
+    --     coordHud.gui = gui
+    --     coordHud.conn = game:GetService("RunService").RenderStepped:Connect(function()
+    --         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    --         if hrp then
+    --             local v = hrp.Position
+    --             lb.Text = string.format("Pos: %.2f, %.2f, %.2f", v.X, v.Y, v.Z)
+    --         end
+    --     end)
+    --     coordHud.visible = true
+    -- end
+    -- SettingsMisc:Toggle({ Title = "Show Coordinate HUD", Callback = function(v)
+    --     if v then createCoordHud() else destroyCoordHud() end
+    -- end })
+    -- SettingsMisc:Button({ Title = "Copy Position (Vector3)", Callback = function()
+    --     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    --     if not hrp then pcall(function() UI:Notify({ Title = "Coord", Content = "Character/HRP not found", Duration = 2, Icon = "alert-triangle" }) end); return end
+    --     local p3 = hrp.Position
+    --     local s = ("Vector3.new(%.3f, %.3f, %.3f)"):format(p3.X, p3.Y, p3.Z)
+    --     if setclipboard then setclipboard(s) end
+    --     pcall(function() UI:Notify({ Title = "Coord", Content = "Copied Vector3 to clipboard", Duration = 2, Icon = "clipboard" }) end)
+    -- end })
+    -- SettingsMisc:Button({ Title = "Copy CFrame", Callback = function()
+    --     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    --     if not hrp then pcall(function() UI:Notify({ Title = "Coord", Content = "Character/HRP not found", Duration = 2, Icon = "alert-triangle" }) end); return end
+    --     local cf = hrp.CFrame
+    --     local s = tostring(cf)
+    --     if setclipboard then setclipboard(s) end
+    --     pcall(function() UI:Notify({ Title = "Coord", Content = "Copied CFrame to clipboard", Duration = 2, Icon = "clipboard" }) end)
+    -- end })
+
+
+    -- Copy current CFrame (position + rotation) helper
+    -- Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
+    --     local char = player.Character or player.CharacterAdded:Wait()
+    --     local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
+    --     if not hrp then
+    --         pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
+    --         return
+    --     end
+    --     local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
+    --     local cfString = string.format(
+    --         "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
+    --         a,b,c,d,e,f,g,h,i,j,k,l
+    --     )
+    --     if setclipboard then pcall(setclipboard, cfString) end
+    --     pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
+    -- end })
