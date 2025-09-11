@@ -656,6 +656,64 @@ local function buildWindow()
         Locked = true
     })
 
+    -- Dynamic Rod Shop (reads item list from game)
+    local function discoverRods()
+        local rods, order = {}, {}
+        pcall(function()
+            local itemsFolder = ReplicatedStorage:FindFirstChild("Items")
+            if not itemsFolder then return end
+            for _, m in ipairs(itemsFolder:GetChildren()) do
+                local ok, mod = pcall(require, m)
+                if ok and mod and mod.Data then
+                    local data = mod.Data
+                    local isRod = (data.Type and tostring(data.Type):lower():find("rod")) or (mod.Name and tostring(mod.Name):lower():find("rod"))
+                    if isRod and data.Id and data.Name then
+                        rods[data.Name] = data.Id
+                        table.insert(order, data.Name)
+                    end
+                end
+            end
+        end)
+        table.sort(order)
+        return rods, order
+    end
+
+    local rodNameToId, rodNames = discoverRods()
+    local selectedRodName
+    Shop:Dropdown({
+        Title = "🎣 Select Rod to Buy (from game)",
+        Values = rodNames,
+        Multi = false,
+        AllowNone = true,
+        Callback = function(name) selectedRodName = name end
+    })
+    Shop:Button({ Title = "🔄 Refresh Rod List", Callback = function()
+        rodNameToId, rodNames = discoverRods()
+        pcall(function() UI:Notify({ Title = "Shop", Content = "Rod list refreshed (" .. tostring(#rodNames) .. ")", Duration = 2, Icon = "refresh-ccw" }) end)
+    end })
+    Shop:Button({ Title = "🛒 Buy Selected Rod", Callback = function()
+        if not selectedRodName then
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Select a rod first", Duration = 2, Icon = "alert-triangle" }) end)
+            return
+        end
+        local net = getNetFolder()
+        local rf = net and net:FindFirstChild("RF/PurchaseFishingRod")
+        if not rf then
+            pcall(function() UI:Notify({ Title = "Shop", Content = "PurchaseFishingRod remote not found", Duration = 3, Icon = "alert-triangle" }) end)
+            return
+        end
+        local id = rodNameToId[selectedRodName]
+        local success = false
+        -- Try by ID then by Name for compatibility
+        if id then success = pcall(function() return rf:InvokeServer(id) end) and true or false end
+        if not success then success = pcall(function() return rf:InvokeServer(selectedRodName) end) and true or false end
+        if success then
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchased: " .. selectedRodName, Duration = 2, Icon = "circle-check" }) end)
+        else
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchase failed: " .. selectedRodName, Duration = 2, Icon = "x-circle" }) end)
+        end
+    end })
+
     -------------------------------------------
     ----- =======[ AUTO FISH TAB ]
     -------------------------------------------
