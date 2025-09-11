@@ -674,8 +674,8 @@ local function buildWindow()
                         if suc and mod and mod.Data then
                             local d = mod.Data
                             local lname = d.Name and tostring(d.Name):lower() or ""
-                            local isRod = (d.Type and tostring(d.Type):lower():find("rod")) or lname:find(" rod") or lname:sub(-3) == "rod" or lname:find(" rods") or lname:sub(-4) == "rods"
-                            local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or lname:find("skin")
+                            local isRod = (d.Type and tostring(d.Type):lower():find("rod")) and (lname:find(" rods") or lname:sub(-4) == "rods")
+                            local isSkin = d.SubType and tostring(d.SubType):lower():find("skin")
                             if isRod and not isSkin then add(d.Name, d.Id) end
                         end
                     end
@@ -692,8 +692,8 @@ local function buildWindow()
                     if ok2 and mod and mod.Data then
                         local d = mod.Data
                         local lname = d.Name and tostring(d.Name):lower() or ""
-                        local isRod = (d.Type and tostring(d.Type):lower():find("rod")) or lname:find(" rod") or lname:sub(-3) == "rod" or lname:find(" rods") or lname:sub(-4) == "rods"
-                        local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or lname:find("skin")
+                        local isRod = (d.Type and tostring(d.Type):lower():find("rod")) and (lname:find(" rods") or lname:sub(-4) == "rods")
+                        local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or (d.Name and tostring(d.Name):lower():find("skin"))
                         local soldInShop = (d.Sold ~= false) and (d.Shop ~= false) -- assume true if not specified
                         if isRod and not isSkin and soldInShop then add(d.Name, d.Id) end
                     end
@@ -704,25 +704,25 @@ local function buildWindow()
         return rods, order
     end
 
-    -- Discover Bobbers/Bobs that are purchasable
-    local function discoverBobbers()
-        local bobs, order = {}, {}
+    -- Discover Baits currently sold
+    local function discoverBaits()
+        local baits, order = {}, {}
         local function add(name, id)
-            if name and id and not bobs[name] then bobs[name] = id; table.insert(order, name) end
+            if name and id and not baits[name] then baits[name] = id; table.insert(order, name) end
         end
-        -- Prefer market/shop sources
         pcall(function()
-            local shop = workspace:FindFirstChild("Market") or workspace:FindFirstChild("Shop") or workspace:FindFirstChild("BobberShop")
-            if not shop then return end
-            for _, inst in ipairs(shop:GetDescendants()) do
-                local try = inst:FindFirstChild("Bobber") or inst
-                local ok, mod = pcall(require, try)
-                if ok and mod and mod.Data then
-                    local d = mod.Data
-                    local lname = d.Name and tostring(d.Name):lower() or ""
-                    local isBob = (d.Type and tostring(d.Type):lower():find("bob")) or lname:find("bob") or lname:find("bobber")
-                    local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or lname:find("skin")
-                    if isBob and not isSkin then add(d.Name, d.Id) end
+            local shop = workspace:FindFirstChild("Market") or workspace:FindFirstChild("Shop") or workspace:FindFirstChild("BaitShop")
+            if shop then
+                for _, inst in ipairs(shop:GetDescendants()) do
+                    local try = inst:FindFirstChild("Bait") or inst
+                    local ok, mod = pcall(require, try)
+                    if ok and mod and mod.Data then
+                        local d = mod.Data
+                        local lname = d.Name and tostring(d.Name):lower() or ""
+                        local isBait = (d.Type and tostring(d.Type):lower():find("bait")) or lname:find("bait")
+                        local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or lname:find("skin")
+                        if isBait and not isSkin then add(d.Name, d.Id) end
+                    end
                 end
             end
         end)
@@ -735,16 +735,16 @@ local function buildWindow()
                     if ok and mod and mod.Data then
                         local d = mod.Data
                         local lname = d.Name and tostring(d.Name):lower() or ""
-                        local isBob = (d.Type and tostring(d.Type):lower():find("bob")) or lname:find("bob") or lname:find("bobber")
+                        local isBait = (d.Type and tostring(d.Type):lower():find("bait")) or lname:find("bait")
                         local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or lname:find("skin")
                         local soldInShop = (d.Sold ~= false) and (d.Shop ~= false)
-                        if isBob and not isSkin and soldInShop then add(d.Name, d.Id) end
+                        if isBait and not isSkin and soldInShop then add(d.Name, d.Id) end
                     end
                 end
             end)
         end
         table.sort(order)
-        return bobs, order
+        return baits, order
     end
 
     local rodNameToId, rodNames = discoverRods()
@@ -783,39 +783,39 @@ local function buildWindow()
         end
     end })
 
-    -- Bobber Shop (from game)
-    local bobNameToId, bobNames = discoverBobbers()
-    local selectedBobName
+    -- Bait Shop (from game)
+    local baitNameToId, baitNames = discoverBaits()
+    local selectedBaitName
     Shop:Dropdown({
-        Title = "🎯 Select Bobber to Buy (from game)",
-        Values = bobNames,
+        Title = "🪱 Select Bait to Buy (from game)",
+        Values = baitNames,
         Multi = false,
         AllowNone = true,
-        Callback = function(name) selectedBobName = name end
+        Callback = function(name) selectedBaitName = name end
     })
-    Shop:Button({ Title = "🔄 Refresh Bobber List", Callback = function()
-        bobNameToId, bobNames = discoverBobbers()
-        pcall(function() UI:Notify({ Title = "Shop", Content = "Bobber list refreshed (" .. tostring(#bobNames) .. ")", Duration = 2, Icon = "refresh-ccw" }) end)
+    Shop:Button({ Title = "🔄 Refresh Bait List", Callback = function()
+        baitNameToId, baitNames = discoverBaits()
+        pcall(function() UI:Notify({ Title = "Shop", Content = "Bait list refreshed (" .. tostring(#baitNames) .. ")", Duration = 2, Icon = "refresh-ccw" }) end)
     end })
-    Shop:Button({ Title = "🛒 Buy Selected Bobber", Callback = function()
-        if not selectedBobName then
-            pcall(function() UI:Notify({ Title = "Shop", Content = "Select a bobber first", Duration = 2, Icon = "alert-triangle" }) end)
+    Shop:Button({ Title = "🛒 Buy Selected Bait", Callback = function()
+        if not selectedBaitName then
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Select a bait first", Duration = 2, Icon = "alert-triangle" }) end)
             return
         end
         local net = getNetFolder()
-        local rf = net and net:FindFirstChild("RF/PurchaseBait") or net:FindFirstChild("RF/PurchaseBobber")
+        local rf = net and (net:FindFirstChild("RF/PurchaseBait") or net:FindFirstChild("RF/PurchaseBobber"))
         if not rf then
-            pcall(function() UI:Notify({ Title = "Shop", Content = "Bobber purchase remote not found", Duration = 3, Icon = "alert-triangle" }) end)
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Bait purchase remote not found", Duration = 3, Icon = "alert-triangle" }) end)
             return
         end
-        local id = bobNameToId[selectedBobName]
+        local id = baitNameToId[selectedBaitName]
         local success = false
         if id then success = pcall(function() return rf:InvokeServer(id) end) and true or false end
-        if not success then success = pcall(function() return rf:InvokeServer(selectedBobName) end) and true or false end
+        if not success then success = pcall(function() return rf:InvokeServer(selectedBaitName) end) and true or false end
         if success then
-            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchased: " .. selectedBobName, Duration = 2, Icon = "circle-check" }) end)
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchased bait: " .. selectedBaitName, Duration = 2, Icon = "circle-check" }) end)
         else
-            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchase failed: " .. selectedBobName, Duration = 2, Icon = "x-circle" }) end)
+            pcall(function() UI:Notify({ Title = "Shop", Content = "Purchase failed: " .. selectedBaitName, Duration = 2, Icon = "x-circle" }) end)
         end
     end })
 
