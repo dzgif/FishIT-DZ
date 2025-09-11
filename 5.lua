@@ -145,44 +145,41 @@ end
 
 local function startAutoSell()
     task.spawn(function()
-        local lastSellAt = 0
+        local lastSell = 0
+        local minSellInterval = 8 -- seconds
         while state.AutoSell do
             pcall(function()
                 if not Replion then return end
                 local DataReplion = Replion.Client:WaitReplion("Data")
-                local items = DataReplion and DataReplion:Get({"Inventory","Items"})
+                if not DataReplion then return end
+                local items = DataReplion:Get({"Inventory","Items"})
                 if type(items) ~= "table" then return end
 
-                -- Hitung jumlah item di tas (exclude favorited)
-                local unfavoritedCount = 0
+                -- Count inventory load
+                local totalCount, unfavoritedCount = 0, 0
                 for _, item in ipairs(items) do
-                    if not item.Favorited then
-                        unfavoritedCount = unfavoritedCount + (item.Count or 1)
-                    end
+                    local n = item.Count or 1
+                    totalCount = totalCount + n
+                    if not item.Favorited then unfavoritedCount = unfavoritedCount + n end
                 end
 
-                -- Jika melewati threshold dan tidak sedang debounce, lakukan sell
-                if unfavoritedCount >= (state.SellThreshold or 60) and (os.clock() - lastSellAt) > 5 then
+                -- Optional capacity lookup (best-effort)
+                local capacity = DataReplion:Get({"Inventory","Capacity"}) or DataReplion:Get({"Inventory","MaxItems"})
+
+                -- Trigger sell when ANY of these conditions met:
+                -- 1) Unfavorited items reach threshold
+                -- 2) Total items reach threshold (user meant bag fill)
+                -- 3) Capacity exists and total items >= capacity (bag full)
+                local shouldSell = (unfavoritedCount >= state.SellThreshold) or (totalCount >= state.SellThreshold) or (capacity and totalCount >= capacity)
+
+                local now = os.clock()
+                if shouldSell and (now - lastSell) >= minSellInterval then
                     local netFolder = getNetFolder()
                     local sellFunc = netFolder and netFolder:FindFirstChild("RF/SellAllItems")
                     if sellFunc then
-                        lastSellAt = os.clock()
-                        local ok = pcall(function()
-                            sellFunc:InvokeServer()
-                        end)
-                        -- Verifikasi setelah jeda singkat
-                        task.wait(1.5)
-                        local after = 0
-                        local items2 = DataReplion and DataReplion:Get({"Inventory","Items"})
-                        if type(items2) == "table" then
-                            for _, item in ipairs(items2) do if not item.Favorited then after = after + (item.Count or 1) end end
-                        end
-                        if ok and after < unfavoritedCount then
-                            pcall(function() UI:Notify({ Title = "Auto Sell", Content = "Sold items (threshold reached)", Duration = 2, Icon = "circle-check" }) end)
-                        else
-                            -- fallback debounce lebih singkat bila gagal
-                            lastSellAt = os.clock() - 3
-                        end
+                        lastSell = now
+                        local ok = pcall(function() sellFunc:InvokeServer() end)
+                        if ok then pcall(function() UI:Notify({ Title = "Auto Sell", Content = "Sold items ("..tostring(unfavoritedCount).." unfav / "..tostring(totalCount).." total)", Duration = 2, Icon = "check-circle" }) end) end
                     end
                 end
             end)
@@ -365,7 +362,7 @@ local function buildWindow()
         User = { Enabled = true, Anonymous = false, Callback = function() end }
     })
 
-    Window:EditOpenButton({ Title = "DZZ v1", Icon = "circle-check", CornerRadius = UDim.new(0,16), StrokeThickness = 2, Color = ColorSequence.new(Color3.fromHex("9600FF"), Color3.fromHex("AEBAF8")), Draggable = true })
+    Window:EditOpenButton({ Title = "DZ v1", Icon = "circle-check", CornerRadius = UDim.new(0,16), StrokeThickness = 2, Color = ColorSequence.new(Color3.fromHex("9600FF"), Color3.fromHex("AEBAF8")), Draggable = true })
     Window:Tag({ Title = "V1 - STABLE", Color = Color3.fromHex("#ffcc00") })
     UI:SetNotificationLower(true)
     pcall(function() UI:Notify({ Title = "DZZ - Fish It v1", Content = "Script loaded successfully", Duration = 4, Icon = "circle-check" }) end)
@@ -673,93 +670,9 @@ local function buildWindow()
     -------------------------------------------
     Shop:Paragraph({
         Title = "🛒 Shop",
-        Desc = "Buy anywhere (dynamic list from game)",
+        Desc = "Coming Soon",
         Locked = true
     })
-
-    -- Dynamic shop scanner (rods & bobbers/baits)
-    local function scanShopItems()
-        local rods, bobbers = {}, {}
-        local ok, itemsFolder = pcall(function()
-            return game:GetService("ReplicatedStorage"):WaitForChild("Items", 3)
-        end)
-        if not ok or not itemsFolder then return rods, bobbers end
-        for _, module in ipairs(itemsFolder:GetChildren()) do
-            local okReq, data = pcall(require, module)
-            if okReq and data and data.Data then
-                local d = data.Data
-                -- Detect fishing rods
-                if (d.Type == "Tool" or d.Type == "Rod" or d.SubType == "FishingRod") and d.Id and d.Name then
-                    table.insert(rods, { Name = tostring(d.Name), ID = d.Id })
-                end
-                -- Detect bobbers/baits (game often classifies as Baits)
-                if (d.Type == "Baits" or d.Type == "Bobber" or tostring(d.Name):lower():find("bobber")) and d.Id and d.Name then
-                    table.insert(bobbers, { Name = tostring(d.Name), ID = d.Id })
-                end
-            end
-        end
-        table.sort(rods, function(a,b) return a.Name < b.Name end)
-        table.sort(bobbers, function(a,b) return a.Name < b.Name end)
-        return rods, bobbers
-    end
-
-    local rods, bobbers = scanShopItems()
-    local function namesFrom(list)
-        local t = {}
-        for _, it in ipairs(list) do table.insert(t, it.Name) end
-        return t
-    end
-
-    -- Buy Rod (dynamic)
-    Shop:Dropdown({
-        Title = "🎣 Buy Rod",
-        Desc = "Select rod to purchase",
-        Values = namesFrom(rods),
-        Multi = false,
-        AllowNone = true,
-        Callback = function(choice)
-            if not choice or choice == "" then return end
-            local selected
-            for _, r in ipairs(rods) do if r.Name == choice then selected = r break end end
-            if not selected then return end
-            local net = getNetFolder()
-            local rf = net and net:FindFirstChild("RF/PurchaseFishingRod")
-            if not rf then
-                pcall(function() UI:Notify({ Title = "Shop", Content = "PurchaseFishingRod not found", Duration = 2, Icon = "alert-triangle" }) end)
-                return
-            end
-            local ok = pcall(function() rf:InvokeServer(selected.ID) end)
-            pcall(function() UI:Notify({ Title = "Shop", Content = ok and ("Bought " .. selected.Name) or ("Failed to buy " .. selected.Name), Duration = 2, Icon = ok and "check-circle" or "x-circle" }) end)
-        end
-    })
-
-    -- Buy Bobber (dynamic)
-    Shop:Dropdown({
-        Title = "🎯 Buy Bobber",
-        Desc = "Select bobber/bait to purchase",
-        Values = namesFrom(bobbers),
-        Multi = false,
-        AllowNone = true,
-        Callback = function(choice)
-            if not choice or choice == "" then return end
-            local selected
-            for _, b in ipairs(bobbers) do if b.Name == choice then selected = b break end end
-            if not selected then return end
-            local net = getNetFolder()
-            local rf = net and net:FindFirstChild("RF/PurchaseBait")
-            if not rf then
-                pcall(function() UI:Notify({ Title = "Shop", Content = "PurchaseBait not found", Duration = 2, Icon = "alert-triangle" }) end)
-                return
-            end
-            local ok = pcall(function() rf:InvokeServer(selected.ID) end)
-            pcall(function() UI:Notify({ Title = "Shop", Content = ok and ("Bought " .. selected.Name) or ("Failed to buy " .. selected.Name), Duration = 2, Icon = ok and "check-circle" or "x-circle" }) end)
-        end
-    })
-
-    Shop:Button({ Title = "🔄 Refresh Shop Lists", Callback = function()
-        rods, bobbers = scanShopItems()
-        pcall(function() UI:Notify({ Title = "Shop", Content = "Lists refreshed ("..tostring(#rods).." rods, "..tostring(#bobbers).." bobbers)", Duration = 2, Icon = "refresh-ccw" }) end)
-    end })
 
     -------------------------------------------
     ----- =======[ AUTO FISH TAB ]
@@ -1552,10 +1465,10 @@ local function buildWindow()
             ["description"] = string.format("Player **%s** caught a **%s** (%s)!", username, fishName, rarityText),
             ["color"] = tonumber("0x00bfff"),
             ["image"] = { ["url"] = imageUrl },
-            ["footer"] = { ["text"] = "DZ Fisher v1  Webhook | " .. os.date("%H:%M:%S") }
+            ["footer"] = { ["text"] = "DZv1 Webhook | " .. os.date("%H:%M:%S") }
         }
         if fields then embed["fields"] = fields end
-        local data = { ["username"] = "DZ Fisher v1 - Notification System", ["embeds"] = { embed } }
+        local data = { ["username"] = "DZv1 Fisher - Notification System", ["embeds"] = { embed } }
         
         local requestFunc = syn and syn.request or http and http.request or http_request or request or fluxus and fluxus.request
         if requestFunc then
@@ -1646,12 +1559,12 @@ local function buildWindow()
             -- Send test webhook
             local WebhookURL = "https://discord.com/api/webhooks/" .. webhookState.webhookPath
             local data = {
-                ["username"] = "DZ Fisher v1  - Notification System",
+                ["username"] = "DZv1 Fisher - Notification System",
                 ["embeds"] = {{
                     ["title"] = "🧪 Test Webhook",
                     ["description"] = "This is a test message from DZv1 script!",
                     ["color"] = tonumber("0x00ff00"),
-                    ["footer"] = { ["text"] = "DZ Fisher v1  Webhook Test | " .. os.date("%H:%M:%S") }
+                    ["footer"] = { ["text"] = "DZv1 Webhook Test | " .. os.date("%H:%M:%S") }
                 }}
             }
             
