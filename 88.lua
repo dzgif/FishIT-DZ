@@ -904,7 +904,7 @@ local function buildWindow()
     -------------------------------------------
     -- Island list diambil dari main.lua (posisi Vector3 dikonversi ke CFrame)
     local ISLAND_LIST = {
-        ["Esoteric Depths"] = { CFrame.new(3298.009766, -1302.854858, 1371.003906, -0.338608444, 0.000000057, 0.940927386, 0.000000004, 1.000000000, -0.000000059, -0.940927386, -0.000000016, -0.338608444) },
+        ["Esoteric Depths"] = { CFrame.new(3305.368652, -1302.854858, 1365.837891, -0.511237919, 0.000000011, 0.859439254, -0.000000001, 1.000000000, -0.000000013, -0.859439254, -0.000000007, -0.511237919) },
         ["Tropical Grove"] = { CFrame.new(-2129.893799, 53.487057, 3637.102783, -0.845159769, 0.000000045, 0.534513772, 0.000000074, 1.000000000, 0.000000033, -0.534513772, 0.000000067, -0.845159769) },
         ["Tropical Grove [Ares Rod]"] = { CFrame.new(-2191.75, 3.37, 3703.33) },
         ["Fisherman Island"] = { CFrame.new(-127.06, 40.75, 2774.84) },
@@ -919,20 +919,22 @@ local function buildWindow()
         ["Lost Isle [Treasure Hall]"] = { CFrame.new(-3600.76, -316.57, -1409.19) },
         ["Lost Isle [Treasure Room]"] = { CFrame.new(-3598.11, -275.95, -1639.98) },
     }
+
     -- Extend list dynamically from workspace locations if present
-    pcall(function()
-        local locations = workspace:FindFirstChild("!!!! ISLAND LOCATIONS !!!!")
-        if locations then
-            for _, obj in ipairs(locations:GetDescendants()) do
-                if obj:IsA("BasePart") then
-                    local name = obj.Name
-                    if name and not ISLAND_LIST[name] then
-                        ISLAND_LIST[name] = { CFrame.new(obj.Position) }
-                    end
-                end
-            end
-        end
-    end)
+    -- pcall(function()
+    --     local locations = workspace:FindFirstChild("!!!! ISLAND LOCATIONS !!!!")
+    --     if locations then
+    --         for _, obj in ipairs(locations:GetDescendants()) do
+    --             if obj:IsA("BasePart") then
+    --                 local name = obj.Name
+    --                 if name and not ISLAND_LIST[name] then
+    --                     ISLAND_LIST[name] = { CFrame.new(obj.Position) }
+    --                 end
+    --             end
+    --         end
+    --     end
+    -- end)
+
     Teleport:Paragraph({
         Title = "🎣 Teleport Information",
         Desc = "Jika ingin memakai auto farm aktifkan ketika sudah memilih pulau/island.\nUntuk teleport biasa silahkan tekan button teleport saja tanpa auto farm.",
@@ -952,22 +954,7 @@ local function buildWindow()
         end
     end })
 
-    -- Copy current CFrame (position + rotation) helper
-    Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
-        if not hrp then
-            pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
-            return
-        end
-        local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
-        local cfString = string.format(
-            "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
-            a,b,c,d,e,f,g,h,i,j,k,l
-        )
-        if setclipboard then pcall(setclipboard, cfString) end
-        pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
-    end })
+
     local autoFarmLoop
     Teleport:Toggle({ Title = "Enable Auto Farm (uses selected island)", Callback = function(v)
         if v then
