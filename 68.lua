@@ -918,6 +918,7 @@ local function buildWindow()
         ["Lost Isle [Sisyphus]"] = { CFrame.new(-3740.087646, -135.074417, -1008.828186, -0.978001833, 0.000000010, -0.208596319, -0.000000002, 1.000000000, 0.000000060, 0.208596319, 0.000000059, -0.978001833) },
         ["Lost Isle [Treasure Hall]"] = { CFrame.new(-3600.76, -316.57, -1409.19) },
         ["Lost Isle [Treasure Room]"] = { CFrame.new(-3598.11, -275.95, -1639.98) },
+        ["Weather Machine"] = { CFrame.new(-1572.540161, 13.189098, 1922.284668, -0.734644592, 0.000000019, -0.678452134, -0.000000026, 1.000000000, 0.000000056, 0.678452134, 0.000000058, -0.734644592) },
     }
 
     -- Extend list dynamically from workspace locations if present
@@ -1452,10 +1453,10 @@ local function buildWindow()
             ["description"] = string.format("Player **%s** caught a **%s** (%s)!", username, fishName, rarityText),
             ["color"] = tonumber("0x00bfff"),
             ["image"] = { ["url"] = imageUrl },
-            ["footer"] = { ["text"] = "DZv1 Webhook | " .. os.date("%H:%M:%S") }
+            ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook | " .. os.date("%H:%M:%S") }
         }
         if fields then embed["fields"] = fields end
-        local data = { ["username"] = "DZv1 Fisher - Notification System", ["embeds"] = { embed } }
+        local data = { ["username"] = "DZ Fisher v1 - Notification System", ["embeds"] = { embed } }
         
         local requestFunc = syn and syn.request or http and http.request or http_request or request or fluxus and fluxus.request
         if requestFunc then
@@ -1546,12 +1547,12 @@ local function buildWindow()
             -- Send test webhook
             local WebhookURL = "https://discord.com/api/webhooks/" .. webhookState.webhookPath
             local data = {
-                ["username"] = "DZv1 Fisher - Notification System",
+                ["username"] = "DZ Fisher v1 - Notification System",
                 ["embeds"] = {{
                     ["title"] = "🧪 Test Webhook",
-                    ["description"] = "This is a test message from DZv1 script!",
+                    ["description"] = "This is a test message from DZ Fisher v1 -  script!",
                     ["color"] = tonumber("0x00ff00"),
-                    ["footer"] = { ["text"] = "DZv1 Webhook Test | " .. os.date("%H:%M:%S") }
+                    ["footer"] = { ["text"] = "DZ Fisher v1 -  Webhook Test | " .. os.date("%H:%M:%S") }
                 }}
             }
             
