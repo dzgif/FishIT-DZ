@@ -349,9 +349,9 @@ local function buildWindow()
     })
 
     Window:EditOpenButton({ Title = "DZ v1", Icon = "circle-check", CornerRadius = UDim.new(0,16), StrokeThickness = 2, Color = ColorSequence.new(Color3.fromHex("9600FF"), Color3.fromHex("AEBAF8")), Draggable = true })
-    Window:Tag({ Title = "V1 STABLE", Color = Color3.fromHex("#ffcc00") })
+    Window:Tag({ Title = "V1 - STABLE", Color = Color3.fromHex("#ffcc00") })
     UI:SetNotificationLower(true)
-    pcall(function() UI:Notify({ Title = "DZ v1", Content = "Script loaded successfully", Duration = 4, Icon = "circle-check" }) end)
+    pcall(function() UI:Notify({ Title = "DZZ - Fish It v1", Content = "Script loaded successfully", Duration = 4, Icon = "circle-check" }) end)
 
 
     -------------------------------------------
@@ -371,9 +371,8 @@ local function buildWindow()
     local SettingsMisc = Window:Tab({ Title = "Settings & Misc", Icon = "settings" })
     local Webhooksettings = Window:Tab({ Title = "Webhook", Icon = "webhook" })
 
-    -- Set default tab to Developer Info on load
+    -- Set default tab to Developer Info on open
     pcall(function() Window:SetTab("Developer Info") end)
-
 
     -------------------------------------------
     ----- =======[ DEVELOPER / DISCORD INFO ]
@@ -934,6 +933,7 @@ local function buildWindow()
             end
         end
     end)
+
     Teleport:Paragraph({
         Title = "🎣 Teleport Information",
         Desc = "Jika ingin memakai auto farm aktifkan ketika sudah memilih pulau/island.\nUntuk teleport biasa silahkan tekan button teleport saja tanpa auto farm.",
