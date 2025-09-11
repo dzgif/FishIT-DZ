@@ -904,20 +904,20 @@ local function buildWindow()
     -------------------------------------------
     -- Island list diambil dari main.lua (posisi Vector3 dikonversi ke CFrame)
     local ISLAND_LIST = {
-        ["Esoteric Depths"] = { CFrame.new(3157, -1303, 1439) },
-        ["Tropical Grove"] = { CFrame.new(-2038, 3, 3650) },
-        ["Stingray Shores"] = { CFrame.new(-32, 4, 2773) },
-        ["Kohana Volcano"] = { CFrame.new(-519, 24, 189) },
-        ["Coral Reefs"] = { CFrame.new(-3095, 1, 2177) },
-        ["Crater Island"] = { CFrame.new(968, 1, 4854) },
-        ["Kohana"] = { CFrame.new(-658, 3, 719) },
-        ["Winter Fest"] = { CFrame.new(1611, 4, 3280) },
-        ["Isoteric Island"] = { CFrame.new(1987, 4, 1400) },
-        ["Lost Isle"] = { CFrame.new(-3670.30078125, -113.00000762939, -1128.05895996) },
-        ["Lost Isle [Lost Shore]"] = { CFrame.new(-3697, 97, -932) },
-        ["Lost Isle [Sisyphus]"] = { CFrame.new(-3719.850830078125, -113.00000762939, -958.6303100585938) },
-        ["Lost Isle [Treasure Hall]"] = { CFrame.new(-3652, -298.25, -1469) },
-        ["Lost Isle [Treasure Room]"] = { CFrame.new(-3652, -283.5, -1651.5) },
+        ["Esoteric Depths"] = { CFrame.new(3295.51, -1302.85, 1371.23) },
+        ["Tropical Grove"] = { CFrame.new(-2129.74, 53.49, 3635.48) },
+        ["Tropical Grove [Ares Rod]"] = { cFrame.new(-2191.75, 3.37, 3703.33)},
+        ["Fisherman Island"] = { CFrame.new(-127.06, 40.75, 2774.84) },
+        ["Kohana Volcano"] = { CFrame.new(-648.43, 66.00, 213.34) },
+        ["Coral Reefs"] = { CFrame.new(-3023.17, 2.52, 2257.24) },
+        ["Crater Island"] = { CFrame.new(1039.25, 55.29, 5130.74) },
+        ["Kohana"] = { CFrame.new(-673.91, 5.75, 705.09) },
+        ["Winter Fest"] = { CFrame.new(1821.90, 5.79, 3307.58) },
+        ["Isoteric Island"] = { CFrame.new(2082.14, 283.98, 1157.43) },
+        ["Lost Isle [Angler Rod Place]"] = { CFrame.new(-3791.82, -147.91, -1349.01) },
+        ["Lost Isle [Sisyphus]"] = { CFrame.new(-3763.11, -135.07, -998.47) },
+        ["Lost Isle [Treasure Hall]"] = { CFrame.new(-3600.76, -316.57, -1409.19) },
+        ["Lost Isle [Treasure Room]"] = { CFrame.new(-3598.11, -275.95, -1639.98) },
     }
     -- Extend list dynamically from workspace locations if present
     pcall(function()
