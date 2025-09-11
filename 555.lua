@@ -63,7 +63,8 @@ local state = {
     LowGraphics = false,
     FPSCap = 0,
     StopAfterCatch = false,
-    SellThreshold = 60,
+    -- Auto Sell now uses time-based interval (minutes)
+    SellIntervalMinutes = 10,
     FavoriteTiers = { [4]=false, [5]=false, [6]=false, [7]=false }, -- Epic, Legendary, Mythic, Secret
     AutoTPEvent = false,
     AutoBuyWeather = false
@@ -145,31 +146,25 @@ end
 
 local function startAutoSell()
     task.spawn(function()
+        local lastSellAt = os.time()
         while state.AutoSell do
             pcall(function()
-                if not Replion then return end
-                local DataReplion = Replion.Client:WaitReplion("Data")
-                local items = DataReplion and DataReplion:Get({"Inventory","Items"})
-                if type(items) ~= "table" then return end
-
-                local unfavoritedCount = 0
-                for _, item in ipairs(items) do
-                    if not item.Favorited then
-                        unfavoritedCount = unfavoritedCount + (item.Count or 1)
-                    end
-                end
-
-                if unfavoritedCount >= state.SellThreshold then
+                local intervalSec = math.max(1, (tonumber(state.SellIntervalMinutes) or 10) * 60)
+                if os.time() - lastSellAt >= intervalSec then
                     local netFolder = getNetFolder()
                     if netFolder then
                         local sellFunc = netFolder:FindFirstChild("RF/SellAllItems")
                         if sellFunc then
-                            task.spawn(sellFunc.InvokeServer, sellFunc)
+                            local ok = pcall(sellFunc.InvokeServer, sellFunc)
+                            if ok then
+                                lastSellAt = os.time()
+                                pcall(function() UI:Notify({ Title = "Auto Sell", Content = "Sold items (timer)", Duration = 2, Icon = "circle-check" }) end)
+                            end
                         end
                     end
                 end
             end)
-            task.wait(10)
+            task.wait(1)
         end
     end)
 end
@@ -680,7 +675,7 @@ local function buildWindow()
     })
     
     MainFeautures:Toggle({
-        Title = "Auto Sell (Threshold Based)",
+        Title = "Auto Sell (Interval)",
         Callback = function(Value)
             state.AutoSell = Value
             if Value then startAutoSell() end
@@ -688,12 +683,12 @@ local function buildWindow()
     })
     
     MainFeautures:Input({
-        Title = "Sell Threshold (Fish Count)",
-        Placeholder = tostring(state.SellThreshold),
+        Title = "Sell Interval (minutes)",
+        Placeholder = tostring(state.SellIntervalMinutes),
         Callback = function(txt)
             local num = tonumber(txt)
-            if num and num >= 10 and num <= 200 then
-                state.SellThreshold = num
+            if num and num >= 1 and num <= 120 then
+                state.SellIntervalMinutes = math.floor(num)
             end
         end
     })
@@ -1315,7 +1310,7 @@ local function buildWindow()
         return dst
     end
     local allowKeys = {
-        AutoFish=true, AutoSell=true, SellThreshold=true,
+        AutoFish=true, AutoSell=true, SellIntervalMinutes=true,
         FavoriteTiers=true, WalkSpeed=true,
         AutoTPEvent=true,
         AutoBuyWeather=true,
