@@ -658,22 +658,46 @@ local function buildWindow()
 
     -- Dynamic Rod Shop (reads item list from game)
     local function discoverRods()
+        -- Prefer shop NPC inventory if available to list current-for-sale rods only
         local rods, order = {}, {}
-        pcall(function()
-            local itemsFolder = ReplicatedStorage:FindFirstChild("Items")
-            if not itemsFolder then return end
-            for _, m in ipairs(itemsFolder:GetChildren()) do
-                local ok, mod = pcall(require, m)
-                if ok and mod and mod.Data then
-                    local data = mod.Data
-                    local isRod = (data.Type and tostring(data.Type):lower():find("rod")) or (mod.Name and tostring(mod.Name):lower():find("rod"))
-                    if isRod and data.Id and data.Name then
-                        rods[data.Name] = data.Id
-                        table.insert(order, data.Name)
+        local function add(name, id)
+            if name and id and not rods[name] then rods[name] = id; table.insert(order, name) end
+        end
+        -- Try read shop/market containers commonly used in Fish It
+        local ok = pcall(function()
+            local shop = workspace:FindFirstChild("Market") or workspace:FindFirstChild("Shop") or workspace:FindFirstChild("RodShop")
+            if shop then
+                for _, inst in ipairs(shop:GetDescendants()) do
+                    if inst:IsA("Folder") or inst:IsA("Model") or inst:IsA("ModuleScript") then
+                        local try = inst:FindFirstChild("Rod") or inst
+                        local suc, mod = pcall(require, try)
+                        if suc and mod and mod.Data then
+                            local d = mod.Data
+                            local isRod = d.Type and tostring(d.Type):lower():find("rod")
+                            local isSkin = d.SubType and tostring(d.SubType):lower():find("skin")
+                            if isRod and not isSkin then add(d.Name, d.Id) end
+                        end
                     end
                 end
             end
         end)
+        -- Fallback to Items folder but filter out skins and check a Sold/Shop flag if present
+        if #order == 0 then
+            pcall(function()
+                local itemsFolder = ReplicatedStorage:FindFirstChild("Items")
+                if not itemsFolder then return end
+                for _, m in ipairs(itemsFolder:GetChildren()) do
+                    local ok2, mod = pcall(require, m)
+                    if ok2 and mod and mod.Data then
+                        local d = mod.Data
+                        local isRod = d.Type and tostring(d.Type):lower():find("rod")
+                        local isSkin = (d.SubType and tostring(d.SubType):lower():find("skin")) or (d.Name and tostring(d.Name):lower():find("skin"))
+                        local soldInShop = (d.Sold ~= false) and (d.Shop ~= false) -- assume true if not specified
+                        if isRod and not isSkin and soldInShop then add(d.Name, d.Id) end
+                    end
+                end
+            end)
+        end
         table.sort(order)
         return rods, order
     end
