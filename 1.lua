@@ -951,6 +951,23 @@ local function buildWindow()
             if hrp and pos then hrp.CFrame = pos end
         end
     end })
+
+    -- Copy current CFrame (position + rotation) helper
+    Teleport:Button({ Title = "Copy Current CFrame (with rotation)", Callback = function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char and (char:FindFirstChild("HumanoidRootPart") or char:WaitForChild("HumanoidRootPart"))
+        if not hrp then
+            pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "HumanoidRootPart not found", Duration = 2, Icon = "alert-triangle" }) end)
+            return
+        end
+        local a,b,c,d,e,f,g,h,i,j,k,l = hrp.CFrame:GetComponents()
+        local cfString = string.format(
+            "CFrame.new(%.6f, %.6f, %.6f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f, %.9f)",
+            a,b,c,d,e,f,g,h,i,j,k,l
+        )
+        if setclipboard then pcall(setclipboard, cfString) end
+        pcall(function() UI:Notify({ Title = "Copy CFrame", Content = "Copied to clipboard", Duration = 2, Icon = "clipboard" }) end)
+    end })
     local autoFarmLoop
     Teleport:Toggle({ Title = "Enable Auto Farm (uses selected island)", Callback = function(v)
         if v then
