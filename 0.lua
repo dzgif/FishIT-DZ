@@ -906,7 +906,7 @@ local function buildWindow()
     local ISLAND_LIST = {
         ["Esoteric Depths"] = { CFrame.new(3295.51, -1302.85, 1371.23) },
         ["Tropical Grove"] = { CFrame.new(-2129.74, 53.49, 3635.48) },
-        ["Tropical Grove [Ares Rod]"] = { cFrame.new(-2191.75, 3.37, 3703.33)},
+        ["Tropical Grove [Ares Rod]"] = { CFrame.new(-2191.75, 3.37, 3703.33) },
         ["Fisherman Island"] = { CFrame.new(-127.06, 40.75, 2774.84) },
         ["Kohana Volcano"] = { CFrame.new(-648.43, 66.00, 213.34) },
         ["Coral Reefs"] = { CFrame.new(-3023.17, 2.52, 2257.24) },
