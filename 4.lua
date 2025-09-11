@@ -145,6 +145,7 @@ end
 
 local function startAutoSell()
     task.spawn(function()
+        local lastSellAt = 0
         while state.AutoSell do
             pcall(function()
                 if not Replion then return end
@@ -152,6 +153,7 @@ local function startAutoSell()
                 local items = DataReplion and DataReplion:Get({"Inventory","Items"})
                 if type(items) ~= "table" then return end
 
+                -- Hitung jumlah item di tas (exclude favorited)
                 local unfavoritedCount = 0
                 for _, item in ipairs(items) do
                     if not item.Favorited then
@@ -159,17 +161,32 @@ local function startAutoSell()
                     end
                 end
 
-                if unfavoritedCount >= state.SellThreshold then
+                -- Jika melewati threshold dan tidak sedang debounce, lakukan sell
+                if unfavoritedCount >= (state.SellThreshold or 60) and (os.clock() - lastSellAt) > 5 then
                     local netFolder = getNetFolder()
-                    if netFolder then
-                        local sellFunc = netFolder:FindFirstChild("RF/SellAllItems")
-                        if sellFunc then
-                            task.spawn(sellFunc.InvokeServer, sellFunc)
+                    local sellFunc = netFolder and netFolder:FindFirstChild("RF/SellAllItems")
+                    if sellFunc then
+                        lastSellAt = os.clock()
+                        local ok = pcall(function()
+                            sellFunc:InvokeServer()
+                        end)
+                        -- Verifikasi setelah jeda singkat
+                        task.wait(1.5)
+                        local after = 0
+                        local items2 = DataReplion and DataReplion:Get({"Inventory","Items"})
+                        if type(items2) == "table" then
+                            for _, item in ipairs(items2) do if not item.Favorited then after = after + (item.Count or 1) end end
+                        end
+                        if ok and after < unfavoritedCount then
+                            pcall(function() UI:Notify({ Title = "Auto Sell", Content = "Sold items (threshold reached)", Duration = 2, Icon = "circle-check" }) end)
+                        else
+                            -- fallback debounce lebih singkat bila gagal
+                            lastSellAt = os.clock() - 3
                         end
                     end
                 end
             end)
-            task.wait(10)
+            task.wait(2)
         end
     end)
 end
